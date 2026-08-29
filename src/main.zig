@@ -105,28 +105,6 @@ fn getConfirmation(stdin: *std.Io.Reader, stdout: *std.Io.Writer) !Answer {
     return .none;
 }
 
-fn collectAnswer(fucked_up: ?*bool, variant: Answer, stdout: *std.Io.Writer) !void {
-    switch (variant) {
-        .yes => {
-            if (!fucked_up.?.*) {
-                fucked_up.?.* = true;
-                try stdout.writeAll("god you are stupid. try again\n>");
-                try stdout.flush();
-            } else {
-                try stdout.writeAll("fuck you\n");
-                try stdout.flush();
-                std.process.exit(0);
-            }
-        },
-        .Garbage => {
-            try stdout.writeAll("thought so dipshit\n");
-            try stdout.flush();
-            std.process.exit(0);
-        },
-        else => unreachable,
-    }
-}
-
 fn countdown(io: std.Io, mode: Mode, stdout: *std.Io.Writer) !void {
     try stdout.print("Alright, {s} in ", .{mode.desc()});
 
