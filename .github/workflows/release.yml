@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@v31
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Allow unprivileged user namespaces
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: Test
+        run: nix run .#test
+
+      - name: Build
+        run: nix build .#foreign
+
+      - name: Package
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          mkdir -p dist
+
+          binary="$(find -L result/bin -maxdepth 1 -type f -executable -print -quit)"
+
+          if [ -z "$binary" ]; then
+            echo "Could not find built executable in result/bin"
+            exit 1
+          fi
+
+          install -Dm755 "$binary" dist/poweroff_guard
+
+          tar \
+            -C dist \
+            -czf "poweroff_guard-${TAG}-linux-x86_64.tar.gz" \
+            poweroff_guard
+
+          sha256sum \
+            "poweroff_guard-${TAG}-linux-x86_64.tar.gz" \
+            > "poweroff_guard-${TAG}-linux-x86_64.tar.gz.sha256"
+
+      - name: Release
+        uses: softprops/action-gh-release@v3
+        with:
+          generate_release_notes: true
+          files: |
+            poweroff_guard-${{ github.ref_name }}-linux-x86_64.tar.gz
+            poweroff_guard-${{ github.ref_name }}-linux-x86_64.tar.gz.sha256
+
