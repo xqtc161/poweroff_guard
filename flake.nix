@@ -37,19 +37,18 @@
         };
 
         # nix build .
-        packages.default = packages.foreign.override (attrs: {
-          # Prefer nix friendly settings.
-          zigPreferMusl = false;
-
-          # Executables required for runtime
-          # These packages will be added to the PATH
-          zigWrapperBins = with env.pkgs; [ ];
-
-          # Libraries required for runtime
-          # These packages will be added to the LD_LIBRARY_PATH
-          zigWrapperLibs = attrs.buildInputs or [ ];
-        });
-
+        packages.default =
+          if env.pkgs.stdenv.hostPlatform.isLinux then
+            import ./nix/nixos.nix {
+              inherit env;
+              basePackage = packages.foreign;
+            }
+          else
+            packages.foreign.override (attrs: {
+              zigPreferMusl = false;
+              zigWrapperBins = with env.pkgs; [ ];
+              zigWrapperLibs = attrs.buildInputs or [ ];
+            });
         # For bundling with nix bundle for running outside of nix
         # example: https://github.com/ralismark/nix-appimage
         apps.bundle = {
