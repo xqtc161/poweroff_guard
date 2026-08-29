@@ -4,6 +4,13 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
+    const poweroff_path = b.option([]const u8, "poweroff-path", "path to poweroff cmd") orelse "/usr/sbin/poweroff";
+    const reboot_path = b.option([]const u8, "reboot-path", "path to reboot cmd") orelse "/usr/sbin/reboot";
+
+    const options = b.addOptions();
+    options.addOption([]const u8, "poweroff_path", poweroff_path);
+    options.addOption([]const u8, "reboot_path", reboot_path);
+
     const exe = b.addExecutable(.{
         .name = "poweroff_guard",
         .root_module = b.createModule(.{
@@ -13,6 +20,8 @@ pub fn build(b: *std.Build) void {
             .imports = &.{},
         }),
     });
+
+    exe.root_module.addOptions("config", options);
 
     b.installArtifact(exe);
 

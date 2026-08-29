@@ -1,4 +1,5 @@
 const std = @import("std");
+const config = @import("config");
 
 const Answer = enum { uppercase, lowercase, none };
 
@@ -8,8 +9,8 @@ const Mode = enum {
 
     fn path(self: Mode) []const u8 {
         return switch (self) {
-            .poweroff => "/usr/sbin/poweroff",
-            .reboot => "/usr/sbin/reboot",
+            .poweroff => config.poweroff_path,
+            .reboot => config.reboot_path,
         };
     }
 
